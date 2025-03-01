@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from scipy.stats import spearmanr
 from lifelines.utils import concordance_index
+from sklearn.impute import KNNImputer
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import seaborn as sns
@@ -33,11 +34,20 @@ X_test = df_test.drop(columns=[time_col], errors='ignore')  # Ensure it exists
 categorical_cols = X_train.select_dtypes(include=['object']).columns.tolist()
 numerical_cols = X_train.select_dtypes(include=['int64', 'float64']).columns.tolist()
 
-# Fill missing values
-X_train[numerical_cols] = X_train[numerical_cols].fillna(X_train[numerical_cols].median())
-X_test[numerical_cols] = X_test[numerical_cols].fillna(X_train[numerical_cols].median())
-X_train[categorical_cols] = X_train[categorical_cols].fillna('Unknown')
-X_test[categorical_cols] = X_test[categorical_cols].fillna('Unknown')
+# Encode categorical variables before imputation
+label_encoders = {}
+for col in categorical_cols:
+    le = LabelEncoder()
+    X_train[col] = le.fit_transform(X_train[col].astype(str))
+    X_test[col] = le.transform(X_test[col].astype(str))
+    label_encoders[col] = le
+
+# Apply KNN imputation to fill missing values
+imputer = KNNImputer(n_neighbors=5)
+X_train[numerical_cols + categorical_cols] = imputer.fit_transform(X_train[numerical_cols + categorical_cols])
+X_test[numerical_cols + categorical_cols] = imputer.transform(X_test[numerical_cols + categorical_cols])
+
+
 
 # Encode categorical variables
 label_encoders = {}
@@ -89,12 +99,12 @@ print("Test Predictions:", y_test_pred)
 log_filename = "model_metrics_tracker.csv"
 headers = ["model used", "Imputation used", "number of features", "features removed", "C1 Score", "Test predictions"]
 data = [
-    "XGBoost", "Median for numerical, 'Unknown' for categorical", X_train.shape[1], "None", cindex, list(y_test_pred)
+    "XGBoost", "KNN Imputation, 'Unknown' for categorical", X_train.shape[1], "None", cindex, list(y_test_pred)
 ]
 
 with open(log_filename, mode='a', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(headers)
+    #writer.writerow(headers)
     writer.writerow(data)
 
 print(f"Metrics logged to {log_filename}")
