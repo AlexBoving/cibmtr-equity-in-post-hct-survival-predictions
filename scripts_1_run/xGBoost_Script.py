@@ -92,7 +92,7 @@ data = [
     "XGBoost", "Median for numerical, 'Unknown' for categorical", X_train.shape[1], "None", cindex, list(y_test_pred)
 ]
 
-with open(log_filename, mode='w', newline='') as file:
+with open(log_filename, mode='a', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(headers)
     writer.writerow(data)
