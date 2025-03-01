@@ -4,7 +4,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from scipy.stats import spearmanr
 from lifelines.utils import concordance_index
-from sklearn.impute import KNNImputer
+#from sklearn.impute import KNNImputer
+
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 import seaborn as sns
@@ -42,11 +45,10 @@ for col in categorical_cols:
     X_test[col] = le.transform(X_test[col].astype(str))
     label_encoders[col] = le
 
-# Apply KNN imputation to fill missing values
-imputer = KNNImputer(n_neighbors=5)
+# Apply Iterative Imputation to fill missing values
+imputer = IterativeImputer(random_state=42)
 X_train[numerical_cols + categorical_cols] = imputer.fit_transform(X_train[numerical_cols + categorical_cols])
 X_test[numerical_cols + categorical_cols] = imputer.transform(X_test[numerical_cols + categorical_cols])
-
 
 
 # Encode categorical variables
